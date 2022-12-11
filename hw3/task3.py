@@ -1,3 +1,5 @@
+import time
+
 from frozen_lake import FrozenLakeEnv
 
 import pandas as pd
@@ -132,7 +134,7 @@ def main():
     gamma_space = np.linspace(0.01, 0.99, 100)
     iteration_space = [int(_) for _ in np.linspace(10, 100, 20)]
     evaluation_space = [int(_) for _ in np.linspace(10, 100, 20)]
-    res = {'g': [], 'i': [], 'e': []}
+    res = {'g': [], 'i': [], 'e': [], 'time_default': [], 'time_val': []}
 
     for _ in tqdm(range(n_iterations)):
         g = np.random.choice(gamma_space)
@@ -142,15 +144,21 @@ def main():
         res['i'].append(i)
         res['e'].append(e)
 
+        start_time = time.time()
         result_default.append(run_experiment(i, e, g))
+        res['time_default'].append(time.time() - start_time)
+        start_time = time.time()
         result_mod.append(run_experiment_value(i, e, g))
+        res['time_val'].append(time.time() - start_time)
 
     result_df = pd.DataFrame({
         'gamma': res['g'],
         'iteration_n': res['i'],
         'evaluation_step_n': res['e'],
         'mean_total_reward_default': result_default,
-        'mean_total_reward_mod': result_mod
+        'mean_total_reward_mod': result_mod,
+        'time_default': res['time_default'],
+        'time_val': res['time_val']
     })
 
     result_df.to_csv('task3.csv')
