@@ -56,15 +56,6 @@ def policy_evaluation(policy, gamma, evaluation_step_n):
     return q_values
 
 
-def policy_evaluation_mod(q_values, policy, gamma, evaluation_step_n):
-    values = init_values()
-    for state in values:
-        values[state] = max(q_values[state].values()) if len(q_values[state]) > 0 else 0
-    for _ in range(evaluation_step_n):
-        values = policy_evaluation_step(policy, values, gamma)
-    return get_q_values(values, gamma)
-
-
 def policy_improvement(q_values):
     new_policy = {}
     for state in env.get_all_states():
@@ -100,19 +91,35 @@ def test_policy(policy, render=False):
 def run_experiment(iteration_n,
                    evaluation_step_n,
                    gamma,
-                   render=False,
-                   kind='default'):
+                   render=False):
     policy = init_policy()
     for i in range(iteration_n):
-        if kind == 'default' or i == 0:
-            q_values = policy_evaluation(policy, gamma, evaluation_step_n)
-        elif kind == 'mod':
-            q_values = policy_evaluation_mod(q_values, policy, gamma, evaluation_step_n)
+        q_values = policy_evaluation(policy, gamma, evaluation_step_n)
         policy = policy_improvement(q_values)
 
     total_rewards = []
     for _ in range(1000):
         total_rewards.append(test_policy(policy, render))
+    return np.mean(total_rewards)
+
+
+def run_experiment_value(iteration_n,
+                   evaluation_step_n,
+                   gamma,
+                   render=False):
+    values = init_values()
+    for i in range(iteration_n):
+        values = get_q_values(values, gamma)
+
+        for state in values:
+            val = values[state].values()
+            values[state] = max(val) if len(val) > 0 else 0
+    optimal_q = get_q_values(values, gamma)
+    optimal_policy = policy_improvement(optimal_q)
+
+    total_rewards = []
+    for _ in range(1000):
+        total_rewards.append(test_policy(optimal_policy, render))
     return np.mean(total_rewards)
 
 
@@ -135,8 +142,8 @@ def main():
         res['i'].append(i)
         res['e'].append(e)
 
-        result_default.append(run_experiment(i, e, g, kind='default'))
-        result_mod.append(run_experiment(i, e, g, kind='mod'))
+        result_default.append(run_experiment(i, e, g))
+        result_mod.append(run_experiment_value(i, e, g))
 
     result_df = pd.DataFrame({
         'gamma': res['g'],
@@ -146,7 +153,7 @@ def main():
         'mean_total_reward_mod': result_mod
     })
 
-    result_df.to_csv('task2.csv')
+    result_df.to_csv('task3.csv')
     print(
         result_df.sort_values('mean_total_reward_mod', ascending=False).head()
     )
