@@ -8,20 +8,11 @@ import random
 class DQN:
     def __init__(self, model: nn.Module, state_dim: int, action_n: int, batch_size, gamma, lr, trajectory_n):
         self.action_n = action_n
-        # self.model = model
+        self.model = model
         self.epsilon = 1
         self.batch_size = batch_size
         self.gamma = gamma
         self.lr = lr
-
-        self.model = model
-        # self.model = nn.Sequential(
-        #     nn.Linear(state_dim, 256),
-        #     nn.ReLU(),
-        #     nn.Linear(256, 128),
-        #     nn.ReLU(),
-        #     nn.Linear(128, self.action_n)
-        # )
         self.epsilon_decrease = 1 / trajectory_n
         self.memory = []
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
